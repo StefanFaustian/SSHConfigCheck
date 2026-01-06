@@ -41,16 +41,17 @@ for optiune in "${OPTIUNI[@]}"; do
 	aux="${aux#*;;}"
 	recomandare="${aux%%;;*}"
 	mesaj="${aux#*;;}"
-	valoare=$(grep -E "^[[:space:]]*$key[[:space:]]+" "$fisier" | tail -n 1 | awk '{print $2}')
-	potriviri=$(grep -cE "^[[:space:]]*$key[[:space:]]+" "$fisier")                                                         
+	valoare=$(grep -iE "^[[:space:]]*$key[[:space:]]+" "$fisier" | tail -n 1 | awk '{print $2}')
+	potriviri=$(grep -icE "^[[:space:]]*$key[[:space:]]+" "$fisier")                                                         
 	
 	if (( potriviri >= 2 )); then
 		awk -v key="$key" -v permis="$permis" '
 		$0 ~ /^[[:space:]]*#/ {next}  # omite liniile comentate
-		$1 == key {
+		tolower($1) == tolower(key) {
 			if ($2 !~ permis) {
 			      print "EROARE: (" NR ") optiunea \"" key " " $2 "\" este invalida."
-			      valid=1
+			      invalid=1
+			      next
    			}
    			
 			if (!sw) {
@@ -62,7 +63,7 @@ for optiune in "${OPTIUNI[@]}"; do
 			}
 			
 			if ($2 != ultima_val) {
-				print "SUPRASCRIERE: \"" key " " $2 "\" la linia " NR " (conflict cu \"" key " " ultima_val "\")."
+				print "SUPRASCRIERE: \"" key " " $2 "\" la linia " NR " (conflict cu \"" key " " ultima_val "\" la linia " ultima_ap ")."
 			}
 			else {
 				print "DUPLICAT: \"" key " " $2 "\" se repeta la linia " NR " (aparitie initiala la linia " prima_ap ")."
@@ -72,25 +73,26 @@ for optiune in "${OPTIUNI[@]}"; do
 			ultima_val=$2
 		}
 		END {
-			if (sw && !valid) print "IN EFECT: (" ultima_ap ") " key " " ultima_val 
+			if (sw && !invalid) print "IN EFECT: (" ultima_ap ") " key " " ultima_val 
+			if (invalid) print "ATENTIE: Din cauza prezentei optiunilor invalide, configuratia poate fi respinsa de sshd."
 		}
 		
 		' "$fisier"
 	fi
 	
 	if [[ -z "$valoare" ]]; then                                               
-		if grep -qE "^[[:space:]]*#[[:space:]]*$key[[:space:]]+" "$fisier"; then
-      			echo "ATENTIE: optiunea $key este comentata (valoare implicita/nesetata explicit)."
+		if grep -qiE "^[[:space:]]*#[[:space:]]*$key[[:space:]]+" "$fisier"; then
+      			echo "ATENTIE: optiunea $key este comentata (valoare implicita). Se recomanda explicitare: $mesaj."
     		else
-      			echo "ATENTIE: optiunea $key nu a fost gasita (valoare implicita/nesetata explicit)."
+      			echo "ATENTIE: optiunea $key nu a fost gasita (valoare implicita). Se recomanda explicitare: $mesaj."
     		fi
     	elif [[ "$valoare" =~ $permis ]]; then 
     		if [[ "$valoare" =~ $recomandare ]]; then
-    			echo "VALID: optiunea $key este conforma ($valoare)."
+    			echo "VALID: optiunea \"$key $valoare\" este conforma."
   		else
     			echo "VULNERABILITATE: optiunea \"$key $valoare\" prezinta risc de securitate (recomandat: $mesaj)."
   		fi	
-  	elif [ "$potriviri" == 1 ]; then
+  	elif (( potriviri == 1 )); then
   		echo "EROARE: optiunea \"$key $valoare\" este invalida."
   	fi
 done
