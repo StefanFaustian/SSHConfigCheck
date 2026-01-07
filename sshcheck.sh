@@ -7,7 +7,7 @@ fi
 
 fisier=$1
 
-if [[ ! -e "$fisier" ]]; then		## Verificarea existentei fisierului de configurare
+if [[ ! -e "$fisier" || ! -f "$fisier" ]]; then		## Verificarea existentei fisierului de configurare
 	echo "EROARE: Fisierul $fisier nu exista!"
 	exit 1
 fi
