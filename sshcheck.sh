@@ -30,7 +30,7 @@ OPTIUNI=(
 	"X11Forwarding;;^(yes|no)$;;^no$;;\"X11Forwarding no\""
 	"PermitTunnel;;^(yes|no)$;;^no$;;\"PermitTunnel no\""
 	"MaxAuthTries;;^[0-9]+$;;^([1-4])$;;\"MaxAuthTries [1-4]\""
-	"LoginGraceTime;;^([0-9]+([smhdw])?)$;;^(3[0-9]|4[0-9]|5[0-9]|60|1m)$;;\"LoginGraceTime [30-60]\""
+	"LoginGraceTime;;^([0-9]+([smhdw])?)$;;^([3-5][0-9]s?|60s?|1m)$;;\"LoginGraceTime [30-60]\""
 )	
 
 for optiune in "${OPTIUNI[@]}"; do
